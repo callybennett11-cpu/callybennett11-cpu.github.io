@@ -1,0 +1,56 @@
+const latitude = 33.5186;
+const longitude = -86.8104;
+
+// API URL asking for 7 days of daily high/low temperatures in Fahrenheit
+const apiUrl = `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&daily=temperature_2m_max,temperature_2m_min&temperature_unit=fahrenheit&timezone=auto`;
+
+let weatherData = null;
+
+async function getWeatherData() {
+  try {
+    const response = await fetch(apiUrl);
+    const data = await response.json();
+
+    console.log("Data successfully retrieved:", data);
+    weatherData = data.daily;
+
+    renderForecast(weatherData);
+  } catch (error) {
+    console.error("Error fetching the weather data:", error);
+  }
+}
+
+function renderForecast(dailyData) {
+  const container = document.getElementById("forecast-container");
+  container.innerHTML = "";
+
+  const dates = dailyData.time;
+  const maxTemps = dailyData.temperature_2m_max;
+  const minTemps = dailyData.temperature_2m_min;
+
+  for (let i = 0; i < dates.length; i++) {
+    const dayDiv = document.createElement("div");
+    dayDiv.className = "day-card";
+
+    dayDiv.innerHTML = `
+      <p><strong>Date:</strong> ${dates[i]}</p>
+      <p><strong>High:</strong> ${maxTemps[i]}°F | <strong>Low:</strong> ${minTemps[i]}°F</p>
+    `;
+
+    container.appendChild(dayDiv);
+  }
+}
+
+document.getElementById("analyze-btn").addEventListener("click", () => {
+  if (!weatherData) return;
+
+  const maxTemps = weatherData.temperature_2m_max;
+  const absoluteMax = Math.max(...maxTemps);
+  const hottestIndex = maxTemps.indexOf(absoluteMax);
+  const hottestDate = weatherData.time[hottestIndex];
+
+  document.getElementById("analysis-result").innerHTML =
+    `🔥 The hottest day this week will be ${hottestDate} with a high of ${absoluteMax}°F!`;
+});
+
+getWeatherData();
